@@ -1,35 +1,58 @@
+/**
+ * Midterm Lab Work 2: CSV Dataset Processing
+ * Student: Lord Clyde W. Pega
+ * Problems: MP01, MP11, MP19
+ */
+
 const fs = require('fs');
 const readline = require('readline');
 
-const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout
+});
 
-rl.question('Enter the full path of the CSV dataset file: ', (filePath) => {
+rl.question('Enter the dataset file path: ', (filePath) => {
     try {
-        const data = fs.readFileSync(filePath, 'utf8');
-        // Split rows and skip first 6 rows of noise
-        const rows = data.split('\n').slice(6).filter(row => row.trim() !== '');
+        const path = filePath.replace(/['"]+/g, '');
+        const content = fs.readFileSync(path, 'utf8');
+        const allLines = content.split(/\r?\n/);
+
+        // Filter out empty lines and skip the 6 metadata lines
+        const dataRows = allLines.filter(line => line.trim() !== '').slice(6);
         
-        // Regex to split while respecting quotes
-        const records = rows.map(row => row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/));
+        // Map rows into arrays
+        const dataset = dataRows.map(row => row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/));
 
-        console.log(`\n[MP01] Total Student Records: ${records.length - 1}`);
+        console.log("\n====================================================");
+        console.log("   LAB WORK 2 RESULTS (JS) - LORD CLYDE W. PEGA");
+        console.log("====================================================");
 
-        // MP11: Frequency of PASS/FAIL (Column 8)
-        const resultsFreq = {};
-        for (let i = 1; i < records.length; i++) {
-            const result = records[i][7]?.trim() || "Unknown";
-            resultsFreq[result] = (resultsFreq[result] || 0) + 1;
+        // MP01: Total Records
+        const totalRecords = dataset.length - 1; 
+        console.log(`[MP01] Total Student Records: ${totalRecords}`);
+
+        // MP11: Frequency Count (Exam Type - Column Index 3)
+        const freq = {};
+        for (let i = 1; i < dataset.length; i++) {
+            const exam = dataset[i][3]?.trim() || "Unknown";
+            freq[exam] = (freq[exam] || 0) + 1;
         }
-        console.log("\n[MP11] Frequency Count (PASS/FAIL):", resultsFreq);
+        console.log("\n[MP11] Frequency Count (Exam Type):");
+        Object.entries(freq).forEach(([key, val]) => {
+            console.log(`   - ${key.padEnd(15)} : ${val}`);
+        });
 
-        // MP19: Summary
-        console.log("\n[MP19] Summary Report:");
-        console.log(`- Header found: ${records[0][0]}`);
-        console.log(`- Total Records: ${records.length - 1}`);
-        console.log(`- File Path: ${filePath}`);
+        // MP19: Summary Report
+        console.log("\n[MP19] Dataset Summary Report:");
+        console.log(`   - Source: ${path}`);
+        console.log(`   - Total File Lines: ${allLines.length}`);
+        console.log(`   - Processed Records: ${totalRecords}`);
+        console.log("====================================================\n");
 
     } catch (err) {
-        console.log("Error: Could not read file.");
+        console.log("Error: Could not process file.");
+    } finally {
+        rl.close();
     }
-    rl.close();
 });
